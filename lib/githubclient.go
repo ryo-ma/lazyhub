@@ -50,8 +50,8 @@ func NewClient(rawBaseURL string) (*Client, error) {
 	}, nil
 }
 
-func (client *Client) GetTopicItemList() (*Result, error) {
-	req, err := http.NewRequest("GET", client.BaseURL.String()+"?q=topic", nil)
+func (client *Client) GetTopicItemList(query string) (*Result, error) {
+	req, err := http.NewRequest("GET", client.BaseURL.String()+"?q="+query, nil)
 	if err != nil {
 		return nil, err
 	}
