@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	repositoryView = "topic repository"
+	repositoryView = "repository"
 	textView       = "text"
 	pathView       = "path"
 	helpView       = "help"
@@ -70,11 +70,10 @@ var result *lib.Result
 var isSearch bool
 
 func main() {
-	client, _ = lib.NewClient("https://api.github.com/search/repositories")
-	result, _ = client.GetTopicItemList("ruby")
+	client, _ = lib.NewClient()
+	result, _ = client.GetTrendingRepository("", "")
 	g, err := gocui.NewGui(gocui.OutputNormal)
 	_ = err
-	_ = client
 	defer g.Close()
 
 	g.SetManagerFunc(layout)
@@ -127,9 +126,11 @@ func layout(g *gocui.Gui) error {
 			if view == repositoryView {
 				v.Highlight = true
 				result.Draw(v)
+				v.Title = " Today Trending "
 			}
-			_ = err
-			//return err
+			if view == textView {
+				drawText(g)
+			}
 		}
 	}
 	if !isSearch {
@@ -212,23 +213,30 @@ func drawText(g *gocui.Gui) error {
 	}
 	v.Clear()
 	yOffset, yCurrent, _ := findCursorPosition(g)
-	fmt.Fprintln(v, result.Items[yCurrent+yOffset])
+	v.Title = " " + result.Items[yCurrent+yOffset].GetRepositoryName() + " "
+	fmt.Fprintln(v, result.Items[yCurrent+yOffset].String())
 
 	return nil
 }
 
 func searchRepositoryByTopic(g *gocui.Gui, v *gocui.View) error {
 	topic, err := v.Line(0)
+	if topic == "" {
+		isSearch = false
+		g.DeleteView(searchView)
+		return nil
+	}
 	if err != nil {
 		return err
 	}
-	result, _ = client.GetTopicItemList(topic)
+	result, _ = client.SearchRepository(topic)
 	g.DeleteView(searchView)
 	vr, err := g.View(repositoryView)
 	if err != nil {
 		return err
 	}
 	vr.Clear()
+	vr.Title = " Search [" + topic + "]"
 	result.Draw(vr)
 	isSearch = false
 	return nil
