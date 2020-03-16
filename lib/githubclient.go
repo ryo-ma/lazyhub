@@ -8,12 +8,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"text/template"
 )
 
 type Client struct {
-	SearchRepositoryURL   *url.URL
+	OfficialURL           *url.URL
 	TrendingRepositoryURL *url.URL
 	HTTPClient            *http.Client
 }
@@ -31,9 +32,18 @@ type Item struct {
 	Watchers        int      `json:"watchers"`
 	Topics          []string `json:"topics"`
 	Language        string   `json:"language"`
+	DefaultBranch   string   `json:"default_branch"`
 	CreatedAt       string   `json:"created_at"`
 	UpdatedAt       string   `json:"updated_at"`
 	DataSource      string
+}
+
+type Readme struct {
+	Name        string `json:"name"`
+	Path        string `json:"path"`
+	HTMLURL     string `json:"html_url"`
+	DownloadURL string `json:"download_url"`
+	Content     string `json:"content"`
 }
 
 type Result struct {
@@ -67,12 +77,23 @@ func (item *Item) GetCloneURL() string {
 	return url
 }
 
+func (item *Item) GetREADMEURL() string {
+	url, _ := url.Parse("https://raw.githubusercontent.com")
+	defaultBranch := item.DefaultBranch
+	if defaultBranch == "" {
+		defaultBranch = "master"
+	}
+	url.Path = path.Join(url.Path, item.GetRepositoryName(), defaultBranch, "/README.md")
+	return url.String()
+}
+
 func (item *Item) String() string {
 	const officialTemplateText = `
 	Name: {{.GetRepositoryName}}
 	URL: {{.GetRepositoryURL}}
 	Star: {{.StargazersCount}}
 	Clone URL: {{.GetCloneURL}}
+	README URL: {{.GetREADMEURL}}
 	Description: {{.Description}}
 	Watchers: {{.Watchers}}
 	Topics: {{.Topics}}
@@ -85,6 +106,7 @@ func (item *Item) String() string {
 	URL: {{.GetRepositoryURL}}
 	Star: {{.Stars}}
 	Clone URL: {{.GetCloneURL}}
+	README URL: {{.GetREADMEURL}}
 	Description: {{.Description}}
 	Language: {{.Language}}
 	`
@@ -111,7 +133,7 @@ func (result *Result) Draw(writer io.Writer) error {
 }
 
 func NewClient() (*Client, error) {
-	searchRepositoryURL, err := url.Parse("https://api.github.com/search/repositories")
+	officialURL, err := url.Parse("https://api.github.com")
 	if err != nil {
 		return nil, err
 	}
@@ -120,21 +142,23 @@ func NewClient() (*Client, error) {
 		return nil, err
 	}
 	return &Client{
-		SearchRepositoryURL:   searchRepositoryURL,
+		OfficialURL:           officialURL,
 		TrendingRepositoryURL: trendingRepositoryURL,
 		HTTPClient:            http.DefaultClient,
 	}, nil
 }
 
 func (client *Client) SearchRepository(query string) (*Result, error) {
-	req, err := http.NewRequest("GET", client.SearchRepositoryURL.String()+"?q="+query, nil)
+	url := *client.OfficialURL
+	url.Path = path.Join(url.Path, "search", "repositories")
+	req, err := http.NewRequest("GET", url.String()+"?q="+query, nil)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	req.Header.Add("Accept", "application/vnd.github.mercy-preview+json")
 	resp, err := client.HTTPClient.Do(req)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -152,6 +176,29 @@ func (client *Client) SearchRepository(query string) (*Result, error) {
 	return result, nil
 }
 
+func (client *Client) GetReadme(item Item) (*Readme, error) {
+	url := *client.OfficialURL
+	url.Path = path.Join(url.Path, "repos", item.GetRepositoryName(), "readme")
+	req, err := http.NewRequest("GET", url.String(), nil)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Add("Accept", "application/vnd.github.mercy-preview+json")
+	resp, err := client.HTTPClient.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	var readme *Readme
+	if err = json.Unmarshal(body, &readme); err != nil {
+		return nil, err
+	}
+	return readme, nil
+}
 func (client *Client) GetTrendingRepository(language string, since string) (*Result, error) {
 	q := client.TrendingRepositoryURL.Query()
 	if language != "" {

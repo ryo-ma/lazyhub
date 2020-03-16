@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"./lib"
+	b64 "encoding/base64"
 	"github.com/jroimartin/gocui"
 )
 
@@ -68,6 +69,7 @@ var viewPositions = map[string]viewPosition{
 var client *lib.Client
 var result *lib.Result
 var isSearch bool
+var isShowReadme bool
 
 func main() {
 	client, _ = lib.NewClient()
@@ -84,16 +86,19 @@ func main() {
 	if err := g.SetKeybinding("", 'q', gocui.ModNone, quit); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding(repositoryView, 'k', gocui.ModNone, cursorMovement(-1)); err != nil {
+	if err := g.SetKeybinding(repositoryView, 'r', gocui.ModNone, drawReadme); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding(repositoryView, 'j', gocui.ModNone, cursorMovement(1)); err != nil {
+	if err := g.SetKeybinding("", 'k', gocui.ModNone, cursorMovement(-1)); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding(repositoryView, gocui.KeyCtrlU, gocui.ModNone, cursorMovement(-5)); err != nil {
+	if err := g.SetKeybinding("", 'j', gocui.ModNone, cursorMovement(1)); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding(repositoryView, gocui.KeyCtrlD, gocui.ModNone, cursorMovement(5)); err != nil {
+	if err := g.SetKeybinding("", gocui.KeyCtrlU, gocui.ModNone, cursorMovement(-5)); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("", gocui.KeyCtrlD, gocui.ModNone, cursorMovement(5)); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlF, gocui.ModNone, drawSearchEditor); err != nil {
@@ -102,10 +107,10 @@ func main() {
 	if err := g.SetKeybinding(searchView, gocui.KeyEnter, gocui.ModNone, searchRepositoryByTopic); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding(repositoryView, gocui.KeyArrowUp, gocui.ModNone, cursorMovement(-1)); err != nil {
+	if err := g.SetKeybinding("", gocui.KeyArrowUp, gocui.ModNone, cursorMovement(-1)); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding(repositoryView, gocui.KeyArrowDown, gocui.ModNone, cursorMovement(1)); err != nil {
+	if err := g.SetKeybinding("", gocui.KeyArrowDown, gocui.ModNone, cursorMovement(1)); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
@@ -133,7 +138,7 @@ func layout(g *gocui.Gui) error {
 			}
 		}
 	}
-	if !isSearch {
+	if !isSearch && !isShowReadme {
 		_, err := g.SetCurrentView(repositoryView)
 		if err != nil {
 			log.Fatal("failed to set current view: ", err)
@@ -144,8 +149,8 @@ func layout(g *gocui.Gui) error {
 
 func lineBelow(v *gocui.View, d int) bool {
 	_, y := v.Cursor()
-	line, err := v.Line(y + d)
-	return err == nil && line != ""
+	_, err := v.Line(y + d)
+	return err == nil //&& line != ""
 }
 
 func cursorMovement(d int) func(g *gocui.Gui, v *gocui.View) error {
@@ -159,7 +164,9 @@ func cursorMovement(d int) func(g *gocui.Gui, v *gocui.View) error {
 			if lineBelow(v, distance*dir) {
 				v.MoveCursor(0, distance*dir, false)
 				drawPosition(g)
-				drawText(g)
+				if g.CurrentView().Name() == repositoryView {
+					drawText(g)
+				}
 
 				return nil
 			}
@@ -213,9 +220,28 @@ func drawText(g *gocui.Gui) error {
 	}
 	v.Clear()
 	yOffset, yCurrent, _ := findCursorPosition(g)
+	if yOffset+yCurrent >= len(result.Items) {
+		return nil
+	}
 	v.Title = " " + result.Items[yCurrent+yOffset].GetRepositoryName() + " "
 	fmt.Fprintln(v, result.Items[yCurrent+yOffset].String())
 
+	return nil
+}
+func drawReadme(g *gocui.Gui, _ *gocui.View) error {
+	isShowReadme = true
+	v, err := g.View(textView)
+	if err != nil {
+		return err
+	}
+	v.Clear()
+	yOffset, yCurrent, _ := findCursorPosition(g)
+	v.Title = " " + result.Items[yCurrent+yOffset].GetRepositoryName() + " "
+	readme, _ := client.GetReadme(result.Items[yCurrent+yOffset])
+	b, _ := b64.StdEncoding.DecodeString(readme.Content)
+	fmt.Fprintln(v, string(b))
+	g.SetCurrentView(textView)
+	v.Highlight = true
 	return nil
 }
 
