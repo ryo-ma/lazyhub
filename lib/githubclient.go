@@ -77,38 +77,26 @@ func (item *Item) GetCloneURL() string {
 	return url
 }
 
-func (item *Item) GetREADMEURL() string {
-	url, _ := url.Parse("https://raw.githubusercontent.com")
-	defaultBranch := item.DefaultBranch
-	if defaultBranch == "" {
-		defaultBranch = "master"
-	}
-	url.Path = path.Join(url.Path, item.GetRepositoryName(), defaultBranch, "/README.md")
-	return url.String()
-}
-
 func (item *Item) String() string {
 	const officialTemplateText = `
-	Name: {{.GetRepositoryName}}
-	URL: {{.GetRepositoryURL}}
-	Star: {{.StargazersCount}}
-	Clone URL: {{.GetCloneURL}}
-	README URL: {{.GetREADMEURL}}
+	Name       : {{.GetRepositoryName}}
+	URL        : {{.GetRepositoryURL}}
+	Star       : {{.StargazersCount}}
+	Clone URL  : {{.GetCloneURL}}
 	Description: {{.Description}}
-	Watchers: {{.Watchers}}
-	Topics: {{.Topics}}
-	Language: {{.Language}}
-	CreatedAt: {{.CreatedAt}}
-	UpdatedAt: {{.UpdatedAt}}
+	Watchers   : {{.Watchers}}
+	Topics     : {{.Topics}}
+	Language   : {{.Language}}
+	CreatedAt  : {{.CreatedAt}}
+	UpdatedAt  : {{.UpdatedAt}}
 	`
 	const trendingTemplateText = `
-	Name: {{.GetRepositoryName}}
-	URL: {{.GetRepositoryURL}}
-	Star: {{.Stars}}
-	Clone URL: {{.GetCloneURL}}
-	README URL: {{.GetREADMEURL}}
+	Name       : {{.GetRepositoryName}}
+	URL        : {{.GetRepositoryURL}}
+	Star       : {{.Stars}}
+	Clone URL  : {{.GetCloneURL}}
 	Description: {{.Description}}
-	Language: {{.Language}}
+	Language   : {{.Language}}
 	`
 	templateText := trendingTemplateText
 	if item.DataSource == "OfficialAPI" {
