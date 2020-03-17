@@ -43,6 +43,9 @@ func main() {
 	if err := g.SetKeybinding("", 'q', gocui.ModNone, quit); err != nil {
 		log.Panicln(err)
 	}
+	if err := g.SetKeybinding("", 'x', gocui.ModNone, exit); err != nil {
+		log.Panicln(err)
+	}
 	if err := g.SetKeybinding(repositoryPanel.ViewName, 'r', gocui.ModNone, drawReadme); err != nil {
 		log.Panicln(err)
 	}
@@ -50,6 +53,9 @@ func main() {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("", 'j', gocui.ModNone, cursorMovement(1)); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("", 'g', gocui.ModNone, cursor.MoveToFirst); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlU, gocui.ModNone, cursorMovement(-5)); err != nil {
@@ -134,6 +140,15 @@ func searchRepositoryByTopic(g *gocui.Gui, v *gocui.View) error {
 	vr.Title = " Search [" + topic + "]"
 	repositoryPanel.Result.Draw(vr)
 	g.SetCurrentView(repositoryPanel.ViewName)
+	return nil
+}
+
+func exit(g *gocui.Gui, v *gocui.View) error {
+	if v.Name() == textPanel.ViewName {
+		cursor.MoveToFirst(g, v)
+		v.Highlight = false
+		g.SetCurrentView(repositoryPanel.ViewName)
+	}
 	return nil
 }
 

@@ -21,6 +21,14 @@ func (cursor *Cursor) lineBelow(v *gocui.View, d int) bool {
 	_, err := v.Line(y + d)
 	return err == nil
 }
+func (cursor *Cursor) MoveToFirst(g *gocui.Gui, v *gocui.View) error {
+	yOffset, yCurrent, err := cursor.FindPosition(g, v.Name())
+	if err != nil {
+		panic(err)
+	}
+	cursor.Move(g, v, -(yOffset + yCurrent), nil)
+	return nil
+}
 
 func (cursor *Cursor) Move(g *gocui.Gui, v *gocui.View, d int, callback func(int, int) error) bool {
 	dir := 1
@@ -32,7 +40,9 @@ func (cursor *Cursor) Move(g *gocui.Gui, v *gocui.View, d int, callback func(int
 		if cursor.lineBelow(v, distance*dir) {
 			v.MoveCursor(0, distance*dir, false)
 			yOffset, yCurrent, _ := cursor.FindPosition(g, v.Name())
-			callback(yOffset, yCurrent)
+			if callback != nil {
+				callback(yOffset, yCurrent)
+			}
 
 			return true
 		}

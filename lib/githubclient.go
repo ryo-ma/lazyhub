@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"text/template"
 )
@@ -62,6 +63,13 @@ func (item *Item) GetRepositoryName() string {
 	return name
 }
 
+func (item *Item) GetStars() int {
+	if item.Stars == 0 {
+		return item.StargazersCount
+	}
+	return item.Stars
+}
+
 func (item *Item) GetRepositoryURL() string {
 	url := item.HTMLURL
 	if url == "" {
@@ -81,7 +89,7 @@ func (item *Item) String() string {
 	const officialTemplateText = `
 	Name       : {{.GetRepositoryName}}
 	URL        : {{.GetRepositoryURL}}
-	Star       : {{.StargazersCount}}
+	Star       : ⭐️ {{.StargazersCount}}
 	Clone URL  : {{.GetCloneURL}}
 	Description: {{.Description}}
 	Watchers   : {{.Watchers}}
@@ -93,7 +101,7 @@ func (item *Item) String() string {
 	const trendingTemplateText = `
 	Name       : {{.GetRepositoryName}}
 	URL        : {{.GetRepositoryURL}}
-	Star       : {{.Stars}}
+	Star       : ⭐️ {{.Stars}}
 	Clone URL  : {{.GetCloneURL}}
 	Description: {{.Description}}
 	Language   : {{.Language}}
@@ -115,7 +123,8 @@ func (item *Item) String() string {
 
 func (result *Result) Draw(writer io.Writer) error {
 	for _, item := range result.Items {
-		fmt.Fprintf(writer, " %s\n", item.GetRepositoryName())
+		starText := " ⭐️ " + strconv.Itoa(item.GetStars())
+		fmt.Fprintf(writer, "%-10.10s\033[32m%s\033[0m\n", starText, item.GetRepositoryName())
 	}
 	return nil
 }
