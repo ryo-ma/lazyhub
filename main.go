@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"os/exec"
+	"runtime"
 
 	"encoding/base64"
 	"github.com/atotto/clipboard"
@@ -71,6 +73,12 @@ func main() {
 	if err := g.SetKeybinding(textPanel.ViewName, 'c', gocui.ModNone, copyCloneCommand); err != nil {
 		log.Panicln(err)
 	}
+	if err := g.SetKeybinding(repositoryPanel.ViewName, 'o', gocui.ModNone, openBrowser); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding(textPanel.ViewName, 'o', gocui.ModNone, openBrowser); err != nil {
+		log.Panicln(err)
+	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlU, gocui.ModNone, cursorMovement(-5)); err != nil {
 		log.Panicln(err)
 	}
@@ -132,6 +140,31 @@ func copyCloneCommand(g *gocui.Gui, _ *gocui.View) error {
 
 	statusPanel.DrawText(g, "Copied successfully! \033[32mgit clone "+currentItem.GetCloneURL()+"\033[0m")
 	return nil
+}
+
+func openBrowser(g *gocui.Gui, _ *gocui.View) error {
+	yOffset, yCurrent, _ := cursor.FindPosition(g, repositoryPanel.ViewName)
+	currentItem := repositoryPanel.Result.Items[yCurrent+yOffset]
+	url := currentItem.GetRepositoryURL()
+
+	var err error
+
+	switch runtime.GOOS {
+	case "linux":
+		err = exec.Command("xdg-open", url).Start()
+	case "windows":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	case "darwin":
+		err = exec.Command("open", url).Start()
+	default:
+		statusPanel.DrawText(g, "Failed to open URL. Unsupported platform.")
+	}
+	if err != nil {
+		statusPanel.DrawText(g, "Failed to open URL.")
+	}
+	statusPanel.DrawText(g, "Success to open URL. "+url)
+	return nil
+
 }
 func drawSearchEditor(g *gocui.Gui, _ *gocui.View) error {
 	err := searchPanel.DrawView(g)
