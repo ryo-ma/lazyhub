@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"github.com/jroimartin/gocui"
 )
 
@@ -29,5 +30,16 @@ func (statusPanel *StatusPanel) DrawView(g *gocui.Gui) error {
 		v.SelFgColor = gocui.ColorBlack
 		v.Title = " Status"
 	}
+	return nil
+}
+
+func (statusPanel *StatusPanel) DrawText(g *gocui.Gui, message string) error {
+	v, err := g.View(statusPanel.ViewName)
+	if err != nil {
+		return err
+	}
+	v.Clear()
+	fmt.Fprintln(v, message)
+
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"encoding/base64"
+	"github.com/atotto/clipboard"
 	"github.com/jroimartin/gocui"
 	"github.com/ryo-ma/lazyhub/lib"
 	"github.com/ryo-ma/lazyhub/ui"
@@ -14,6 +15,7 @@ var repositoryPanel *ui.RepositoryPanel
 var textPanel *ui.TextPanel
 var statusPanel *ui.StatusPanel
 var searchPanel *ui.SearchPanel
+var loadingPanel *ui.LoadingPanel
 var cursor *ui.Cursor
 
 func main() {
@@ -23,13 +25,15 @@ func main() {
 	g.SetManagerFunc(layout)
 
 	client, _ = lib.NewClient()
-	result, _ := client.GetTrendingRepository("", "")
 	repositoryPanel, _ = ui.NewRepositoryPanel()
-	repositoryPanel.Result = result
 	textPanel, _ = ui.NewTextPanel()
 	statusPanel, _ = ui.NewStatusPanel()
 	searchPanel, _ = ui.NewSearchPanel()
+	loadingPanel, _ = ui.NewLoadingPanel()
 	cursor = &ui.Cursor{}
+
+	result, _ := client.GetTrendingRepository("", "")
+	repositoryPanel.Result = result
 
 	repositoryPanel.DrawView(g)
 	textPanel.DrawView(g)
@@ -40,22 +44,31 @@ func main() {
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("", 'q', gocui.ModNone, quit); err != nil {
+	if err := g.SetKeybinding(repositoryPanel.ViewName, 'q', gocui.ModNone, quit); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("", 'x', gocui.ModNone, exit); err != nil {
+	if err := g.SetKeybinding(textPanel.ViewName, 'x', gocui.ModNone, exit); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding(repositoryPanel.ViewName, 'r', gocui.ModNone, drawReadme); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("", 'k', gocui.ModNone, cursorMovement(-1)); err != nil {
+	if err := g.SetKeybinding(repositoryPanel.ViewName, 'k', gocui.ModNone, cursorMovement(-1)); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("", 'j', gocui.ModNone, cursorMovement(1)); err != nil {
+	if err := g.SetKeybinding(repositoryPanel.ViewName, 'j', gocui.ModNone, cursorMovement(1)); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("", 'g', gocui.ModNone, cursor.MoveToFirst); err != nil {
+	if err := g.SetKeybinding(textPanel.ViewName, 'k', gocui.ModNone, cursorMovement(-1)); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding(textPanel.ViewName, 'j', gocui.ModNone, cursorMovement(1)); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding(repositoryPanel.ViewName, 'c', gocui.ModNone, copyCloneCommand); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding(textPanel.ViewName, 'c', gocui.ModNone, copyCloneCommand); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlU, gocui.ModNone, cursorMovement(-5)); err != nil {
@@ -83,10 +96,13 @@ func main() {
 }
 
 func layout(g *gocui.Gui) error {
+	render(g)
+	return nil
+}
+func render(g *gocui.Gui) {
 	repositoryPanel.DrawView(g)
 	statusPanel.DrawView(g)
 	textPanel.DrawView(g)
-	return nil
 }
 
 func cursorMovement(d int) func(g *gocui.Gui, v *gocui.View) error {
@@ -104,6 +120,19 @@ func cursorMovement(d int) func(g *gocui.Gui, v *gocui.View) error {
 	}
 }
 
+func copyCloneCommand(g *gocui.Gui, _ *gocui.View) error {
+	yOffset, yCurrent, _ := cursor.FindPosition(g, repositoryPanel.ViewName)
+	currentItem := repositoryPanel.Result.Items[yCurrent+yOffset]
+
+	err := clipboard.WriteAll("git clone " + currentItem.GetCloneURL())
+	if err != nil {
+		statusPanel.DrawText(g, "Failed to copy. Please copy \033[32mgit clone "+currentItem.GetCloneURL()+"\033[0m")
+		return nil
+	}
+
+	statusPanel.DrawText(g, "Copied successfully! \033[32mgit clone "+currentItem.GetCloneURL()+"\033[0m")
+	return nil
+}
 func drawSearchEditor(g *gocui.Gui, _ *gocui.View) error {
 	err := searchPanel.DrawView(g)
 	if err != nil {
@@ -115,31 +144,38 @@ func drawSearchEditor(g *gocui.Gui, _ *gocui.View) error {
 func drawReadme(g *gocui.Gui, _ *gocui.View) error {
 	yOffset, yCurrent, _ := cursor.FindPosition(g, repositoryPanel.ViewName)
 	currentItem := repositoryPanel.Result.Items[yCurrent+yOffset]
-	readme, _ := client.GetReadme(currentItem)
-	b, _ := base64.StdEncoding.DecodeString(readme.Content)
-	textPanel.DrawReadme(g, &currentItem, string(b))
+	loadingPanel.ShowLoading(g, func() {
+		readme, _ := client.GetReadme(currentItem)
+		b, _ := base64.StdEncoding.DecodeString(readme.Content)
+		textPanel.DrawReadme(g, &currentItem, string(b))
+		g.SetCurrentView(textPanel.ViewName)
+	})
 	return nil
 }
 
 func searchRepositoryByTopic(g *gocui.Gui, v *gocui.View) error {
-	topic, err := v.Line(0)
+	topic, _ := v.Line(0)
 	if topic == "" {
 		g.DeleteView(searchPanel.ViewName)
+		g.SetCurrentView(repositoryPanel.ViewName)
 		return nil
 	}
-	if err != nil {
-		return err
-	}
-	repositoryPanel.Result, _ = client.SearchRepository(topic)
-	g.DeleteView(searchPanel.ViewName)
 	vr, err := g.View(repositoryPanel.ViewName)
 	if err != nil {
 		return err
 	}
-	vr.Clear()
-	vr.Title = " Search [" + topic + "]"
-	repositoryPanel.Result.Draw(vr)
-	g.SetCurrentView(repositoryPanel.ViewName)
+	g.DeleteView(searchPanel.ViewName)
+	loadingPanel.ShowLoading(g, func() {
+		repositoryPanel.Result, _ = client.SearchRepository(topic)
+		vr.Clear()
+		vr.Title = " Search [" + topic + "]"
+		repositoryPanel.Result.Draw(vr)
+		g.SetCurrentView(repositoryPanel.ViewName)
+		if len(repositoryPanel.Result.Items) != 0 {
+			textPanel.DrawText(g, &repositoryPanel.Result.Items[0])
+		}
+	})
+	cursor.MoveToFirst(g, vr)
 	return nil
 }
 
