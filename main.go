@@ -49,10 +49,16 @@ func main() {
 	if err := g.SetKeybinding(repositoryPanel.ViewName, 'q', gocui.ModNone, quit); err != nil {
 		log.Panicln(err)
 	}
+	if err := g.SetKeybinding(textPanel.ViewName, 'q', gocui.ModNone, exit); err != nil {
+		log.Panicln(err)
+	}
 	if err := g.SetKeybinding(textPanel.ViewName, 'x', gocui.ModNone, exit); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding(repositoryPanel.ViewName, 'r', gocui.ModNone, drawReadme); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding(repositoryPanel.ViewName, gocui.KeyEnter, gocui.ModNone, drawReadme); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding(repositoryPanel.ViewName, 'k', gocui.ModNone, cursorMovement(-1)); err != nil {
@@ -178,10 +184,14 @@ func drawReadme(g *gocui.Gui, _ *gocui.View) error {
 	yOffset, yCurrent, _ := cursor.FindPosition(g, repositoryPanel.ViewName)
 	currentItem := repositoryPanel.Result.Items[yCurrent+yOffset]
 	loadingPanel.ShowLoading(g, func() {
-		readme, _ := client.GetReadme(currentItem)
-		b, _ := base64.StdEncoding.DecodeString(readme.Content)
-		textPanel.DrawReadme(g, &currentItem, string(b))
-		g.SetCurrentView(textPanel.ViewName)
+		readme, err := client.GetReadme(currentItem)
+		if err != nil {
+			statusPanel.DrawText(g, "Failed to download README.")
+		} else {
+			b, _ := base64.StdEncoding.DecodeString(readme.Content)
+			textPanel.DrawReadme(g, &currentItem, string(b))
+			g.SetCurrentView(textPanel.ViewName)
+		}
 	})
 	return nil
 }
@@ -199,13 +209,17 @@ func searchRepositoryByTopic(g *gocui.Gui, v *gocui.View) error {
 	}
 	g.DeleteView(searchPanel.ViewName)
 	loadingPanel.ShowLoading(g, func() {
-		repositoryPanel.Result, _ = client.SearchRepository(topic)
-		vr.Clear()
-		vr.Title = " Search [" + topic + "]"
-		repositoryPanel.Result.Draw(vr)
-		g.SetCurrentView(repositoryPanel.ViewName)
-		if len(repositoryPanel.Result.Items) != 0 {
-			textPanel.DrawText(g, &repositoryPanel.Result.Items[0])
+		repositoryPanel.Result, err = client.SearchRepository(topic)
+		if err != nil {
+			statusPanel.DrawText(g, "Failed to search repositories.")
+		} else {
+			vr.Clear()
+			vr.Title = " Search [" + topic + "]"
+			repositoryPanel.Result.Draw(vr)
+			g.SetCurrentView(repositoryPanel.ViewName)
+			if len(repositoryPanel.Result.Items) != 0 {
+				textPanel.DrawText(g, &repositoryPanel.Result.Items[0])
+			}
 		}
 	})
 	cursor.MoveToFirst(g, vr)
