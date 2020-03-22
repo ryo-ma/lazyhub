@@ -21,6 +21,10 @@
 go get -u github.com/ryo-ma/lazyhub
 ```
 
+# Binary Download
+
+[Binary releases are available](https://github.com/ryo-ma/lazyhub/releases/tag/v0.0.1)
+
 # Usage
 
 Run the following command.
