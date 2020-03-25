@@ -22,7 +22,9 @@ var cursor *ui.Cursor
 
 func main() {
 	g, err := gocui.NewGui(gocui.OutputNormal)
-	_ = err
+	if err != nil {
+		log.Panicln(err)
+	}
 	defer g.Close()
 	g.SetManagerFunc(layout)
 
