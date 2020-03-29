@@ -4,7 +4,7 @@
 
 :octocat: lazyhub - Terminal UI Client for GitHub using gocui.
 
-<img src="https://user-images.githubusercontent.com/6661165/77137331-c6c7e980-6ab0-11ea-9b33-f663bee6ad81.gif" width="1000">
+<img src="https://user-images.githubusercontent.com/6661165/77839109-f5cb1300-71b4-11ea-886d-924e6efe1b71.gif" width="1000">
 
 # Features
 
