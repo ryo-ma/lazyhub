@@ -8,11 +8,11 @@
 
 # Features
 
-* Check the trending repositories on GitHub today
-* Search repositories
-* Read a README
-* Copy the clone command to clipboard
-* Open the repository page on your browser
+* 🚀Check the trending repositories on GitHub today
+* 🔍Search repositories
+* 📘Read the README
+* 📄Copy the clone command to clipboard
+* 💻Open the repository page on your browser
 
 
 # Install
