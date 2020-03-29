@@ -3,8 +3,7 @@
 [![GoDoc](https://godoc.org/github.com/jroimartin/gocui?status.svg)](https://godoc.org/github.com/jroimartin/gocui)
 
 :octocat: lazyhub - Terminal UI Client for GitHub using gocui.
-
-<img src="https://user-images.githubusercontent.com/6661165/77839109-f5cb1300-71b4-11ea-886d-924e6efe1b71.gif" width="1000">
+![demo](https://user-images.githubusercontent.com/6661165/77839109-f5cb1300-71b4-11ea-886d-924e6efe1b71.gif)
 
 # Features
 
