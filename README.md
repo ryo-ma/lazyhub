@@ -1,14 +1,12 @@
-<h1 align="center">lazyhub</h1>
-
-<p align="center">:octocat: lazyhub - Terminal UI Client for GitHub using gocui.</p>
-
 <p align="center">
   <img src="https://user-images.githubusercontent.com/6661165/78005482-987ebf80-7376-11ea-8d9b-96f72e50710f.png" width=250 alt="logo" />
 </p>
 
+# lazyhub
 
 [![GoDoc](https://godoc.org/github.com/jroimartin/gocui?status.svg)](https://godoc.org/github.com/jroimartin/gocui)
 ---
+:octocat: lazyhub - Terminal UI Client for GitHub using gocui.
 
 # Demo
 
