@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/6661165/78005482-987ebf80-7376-11ea-8d9b-96f72e50710f.png" width=250 alt="logo" />
-</p>
+![logo](https://user-images.githubusercontent.com/6661165/78040587-9cc4d000-73aa-11ea-9710-567e714bdf59.png)
 
 # lazyhub
 
