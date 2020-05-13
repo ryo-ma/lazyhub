@@ -63,3 +63,8 @@ Open the repository page on your browser
 Apache LICENSE 2.0
 
 [LICENSE](./LICENSE)
+
+
+# Using API
+
+* https://github.com/huchenme/github-trending-api
