@@ -58,13 +58,12 @@ Copy the clone command to clipboard
 * <kbd>o</kbd>
 Open the repository page on your browser
 
+# Using API
+
+* https://github.com/huchenme/github-trending-api
+
 # LICENSE
 
 Apache LICENSE 2.0
 
 [LICENSE](./LICENSE)
-
-
-# Using API
-
-* https://github.com/huchenme/github-trending-api
