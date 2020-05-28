@@ -21,6 +21,15 @@
 
 # Install
 
+Using brew
+
+```
+brew tap ryo-ma/lazyhub
+brew install lazyhub
+```
+
+Using go get
+
 ```
 go get -u github.com/ryo-ma/lazyhub
 ```
