@@ -20,30 +20,3 @@ func (vp ViewPosition) GetCoordinates(maxX int, maxY int) (int, int, int, int) {
 	y1 := vp.y1.getCoordinate(maxY)
 	return x0, y0, x1, y1
 }
-
-//var viewPositions = map[string]viewPosition{
-//	RepositoryView: {
-//		position{0.0, 0},
-//		position{0.0, 0},
-//		position{0.3, 2},
-//		position{0.9, 2},
-//	},
-//	TextView: {
-//		position{0.3, 0},
-//		position{0.0, 0},
-//		position{1.0, 2},
-//		position{0.9, 2},
-//	},
-//	PathView: {
-//		position{0.0, 0},
-//		position{0.89, 0},
-//		position{1.0, 2},
-//		position{1.0, 2},
-//	},
-//	SearchView: {
-//		position{0.1, 0},
-//		position{0.35, 0},
-//		position{0.9, 2},
-//		position{0.5, 2},
-//	},
-//}
