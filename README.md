@@ -50,7 +50,7 @@ lazyhub
 
 * <kbd>j</kbd> / <kbd>DownArrow(↓)</kbd>
 Move down a line
-* <kbd>k</kbd> / <kbd>DownUp(↑)</kbd>
+* <kbd>k</kbd> / <kbd>UpArrow(↑)</kbd>
 Move up a line
 * <kbd>q</kbd> / <kbd>CTRL+C</kbd>
 Quit
