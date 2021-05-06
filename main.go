@@ -20,6 +20,11 @@ var searchPanel *ui.SearchPanel
 var loadingPanel *ui.LoadingPanel
 var cursor *ui.Cursor
 
+func _main() {
+	client, _ = lib.NewClient()
+	_, _ = client.GetTrendingRepository("", "")
+}
+
 func main() {
 	g, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {

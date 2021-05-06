@@ -66,6 +66,8 @@ Open the README
 Copy the clone command to clipboard
 * <kbd>o</kbd>
 Open the repository page on your browser
+* <kbd>CTRL+f</kbd>
+Search repositories
 
 # Using API
 

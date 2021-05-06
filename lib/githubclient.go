@@ -22,17 +22,19 @@ type Client struct {
 
 type Item struct {
 	ID              int      `json:"id"`
-	Name            string   `json:"name"`
+	Name            string   `json:"name,repo"`
 	FullName        string   `json:"full_name"`
-	URL             string   `json:"url"`
+	URL             string   `json:"repo_link"`
 	HTMLURL         string   `json:"html_url"`
 	CloneURL        string   `json:"clone_url"`
 	Description     string   `json:"description"`
+	Desc            string   `json:"desc"`
 	StargazersCount int      `json:"stargazers_count,stars"`
-	Stars           int      `json:"stars"`
+	Stars           string   `json:"stars"`
 	Watchers        int      `json:"watchers"`
 	Topics          []string `json:"topics"`
 	Language        string   `json:"language"`
+	Lang            string   `json:"lang"`
 	DefaultBranch   string   `json:"default_branch"`
 	CreatedAt       string   `json:"created_at"`
 	UpdatedAt       string   `json:"updated_at"`
@@ -64,10 +66,11 @@ func (item *Item) GetRepositoryName() string {
 }
 
 func (item *Item) GetStars() int {
-	if item.Stars == 0 {
+	stars, _ := strconv.Atoi(strings.Replace(item.Stars, ",", "", -1))
+	if stars == 0 {
 		return item.StargazersCount
 	}
-	return item.Stars
+	return stars
 }
 
 func (item *Item) GetRepositoryURL() string {
@@ -76,6 +79,20 @@ func (item *Item) GetRepositoryURL() string {
 		return item.URL
 	}
 	return url
+}
+func (item *Item) GetDescription() string {
+	description := item.Description
+	if description == "" {
+		return item.Desc
+	}
+	return description
+}
+func (item *Item) GetLanguage() string {
+	language := item.Language
+	if language == "" {
+		return item.Lang
+	}
+	return language
 }
 func (item *Item) GetCloneURL() string {
 	url := item.GetRepositoryURL()
@@ -103,8 +120,8 @@ func (item *Item) String() string {
 	URL        : {{.GetRepositoryURL}}
 	Star       : ⭐️ {{.Stars}}
 	Clone URL  : {{.GetCloneURL}}
-	Description: {{.Description}}
-	Language   : {{.Language}}
+	Description: {{.GetDescription}}
+	Language   : {{.GetLanguage}}
 	`
 	templateText := trendingTemplateText
 	if item.DataSource == "OfficialAPI" {
@@ -134,7 +151,7 @@ func NewClient() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	trendingRepositoryURL, err := url.Parse("https://github-trending-api.now.sh/repositories")
+	trendingRepositoryURL, err := url.Parse("https://trendings.herokuapp.com/repo")
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +216,7 @@ func (client *Client) GetReadme(item Item) (*Readme, error) {
 func (client *Client) GetTrendingRepository(language string, since string) (*Result, error) {
 	q := client.TrendingRepositoryURL.Query()
 	if language != "" {
-		q.Set("language", language)
+		q.Set("lang", language)
 	}
 	if since != "" {
 		q.Set("since", since)
@@ -222,14 +239,12 @@ func (client *Client) GetTrendingRepository(language string, since string) (*Res
 	if err != nil {
 		return nil, err
 	}
-	var items []Item
-	if err = json.Unmarshal(body, &items); err != nil {
+	var result *Result
+	if err = json.Unmarshal(body, &result); err != nil {
 		return nil, err
 	}
-	for i := range items {
-		items[i].DataSource = "TrendingAPI"
+	for i := range result.Items {
+		result.Items[i].DataSource = "TrendingAPI"
 	}
-	return &Result{
-		Items: items,
-	}, nil
+	return result, nil
 }
